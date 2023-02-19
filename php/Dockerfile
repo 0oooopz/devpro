@@ -1,50 +1,53 @@
-FROM php:8.0.3-fpm
+#
+#--------------------------------------------------------------------------
+# Image Setup
+#--------------------------------------------------------------------------
+#
 
-RUN docker-php-ext-install pdo pdo_mysql
+FROM php:8.1-fpm
 
+# Set Environment Variables
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update
+#
+#--------------------------------------------------------------------------
+# Software's Installation
+#--------------------------------------------------------------------------
+#
+# Installing tools and PHP extentions using "apt", "docker-php", "pecl",
+#
 
-# Install useful tools
-RUN apt-get -y install apt-utils nano wget dialog vim
+# Install "curl", "libmemcached-dev", "libpq-dev", "libjpeg-dev",
+#         "libpng-dev", "libfreetype6-dev", "libssl-dev", "libmcrypt-dev",
+RUN set -eux; \
+    apt-get update; \
+    apt-get upgrade -y; \
+    apt-get install -y --no-install-recommends \
+            curl \
+            libmemcached-dev \
+            libz-dev \
+            libpq-dev \
+            libjpeg-dev \
+            libpng-dev \
+            libfreetype6-dev \
+            libssl-dev \
+            libwebp-dev \
+            libxpm-dev \
+            libmcrypt-dev \
+            libonig-dev; \
+    rm -rf /var/lib/apt/lists/*
 
-# Install important libraries
-RUN echo "\e[1;33mInstall important libraries\e[0m"
-RUN apt-get -y install --fix-missing \
-    apt-utils \
-    build-essential \
-    git \
-    curl \
-    libcurl4 \
-    libcurl4-openssl-dev \
-    zlib1g-dev \
-    libzip-dev \
-    zip \
-    libbz2-dev \
-    locales \
-    libmcrypt-dev \
-    libicu-dev \
-    libonig-dev \
-    libxml2-dev
-    
-RUN echo "\e[1;33mInstall important docker dependencies\e[0m"
-RUN docker-php-ext-install \
-    exif \
-    pcntl \
-    bcmath \
-    ctype \
-    curl \
-    iconv \
-    xml \
-    soap \
-    pcntl \
-    mbstring \
-    tokenizer \
-    bz2 \
-    zip \
-    intl
-
-# Install Postgre PDO
-RUN apt-get install -y libpq-dev \
-    && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
-    && docker-php-ext-install pdo pdo_pgsql pgsql
+RUN set -eux; \
+    # Install the PHP pdo_mysql extention
+    docker-php-ext-install pdo_mysql; \
+    # Install the PHP pdo_pgsql extention
+    docker-php-ext-install pdo_pgsql; \
+    # Install the PHP gd library
+    docker-php-ext-configure gd \
+            --prefix=/usr \
+            --with-jpeg \
+            --with-webp \
+            --with-xpm \
+            --with-freetype; \
+    docker-php-ext-install gd; \
+    php -r 'var_dump(gd_info());'
